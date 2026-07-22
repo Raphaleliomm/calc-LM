@@ -8,3 +8,15 @@ GLM 5.2 Q/A Logic puzzles: https://huggingface.co/datasets/ianncity/GLM-5.2-Logi
   Not good: uses weird token combinations for specific symbols, may be to advanced for the mini model, has thinking (maybe eats too much tokens for my mini model)
   Good: contains direct logical thinking, comes from a really good model
 
+GLM 5.2 Q/A science: https://huggingface.co/datasets/ianncity/GLM-5.2-Science
+  Not good: has science, uses weird token combinations for specific symbols, may be to advanced for the mini model, has thinking (maybe eats too much tokens for my mini model)
+  Good: contains direct logical thinking, comes from a really good model
+
+Elementary-school math: https://huggingface.co/datasets/sanjay-29-29/math-dataset-instruction/viewer/default/train?p=2&row=200
+  Not good:
+  Good: easy math with direct answer reasoning
+
+Math basics: https://huggingface.co/datasets/MU-NLPC/Calc-gsm8k
+  Not good:
+  Good:
+
