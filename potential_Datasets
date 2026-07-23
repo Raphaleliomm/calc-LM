@@ -20,6 +20,6 @@ Math basics: https://huggingface.co/datasets/MU-NLPC/Calc-gsm8k
   Not good:
   Good: easy math
 
-Math augmented: https://huggingface.co/datasets/meta-math/MetaMathQA
+MetaMathQA : https://huggingface.co/datasets/meta-math/MetaMathQA
   Not good:
   Good: Large, easy math
