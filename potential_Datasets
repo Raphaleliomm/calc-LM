@@ -18,5 +18,8 @@ Elementary-school math: https://huggingface.co/datasets/sanjay-29-29/math-datase
 
 Math basics: https://huggingface.co/datasets/MU-NLPC/Calc-gsm8k
   Not good:
-  Good:
+  Good: easy math
 
+Math augmented: https://huggingface.co/datasets/meta-math/MetaMathQA
+  Not good:
+  Good: Large, easy math
