@@ -23,3 +23,12 @@ Math basics: https://huggingface.co/datasets/MU-NLPC/Calc-gsm8k
 MetaMathQA : https://huggingface.co/datasets/meta-math/MetaMathQA
   Not good:
   Good: Large, easy math
+
+Gutenberg Poetry Corpus: https://huggingface.co/datasets/biglam/gutenberg-poetry-corpus
+  Not good: weird Language, has knowledge avout the world
+  Good:
+
+Proofwriter: https://huggingface.co/datasets/D3xter1922/proofwriter-dataset
+  Not good:
+  Good:
+
