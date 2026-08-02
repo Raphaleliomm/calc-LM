@@ -30,7 +30,7 @@ os.environ.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
 MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.1"
 OUTPUT_DIR = Path(os.environ.get("WORLD_KNOWLEDGE_OUTPUT_DIR", "/kaggle/working/world_knowledge_classification"))
 NUM_GPUS = 1
-MAX_NEW_TOKENS = 64
+MAX_NEW_TOKENS = 1
 MAX_INPUT_TOKENS = 2048
 
 DATASETS = [
@@ -42,35 +42,15 @@ DATASETS = [
     "meta-math/MetaMathQA",
 ]
 
-SYSTEM_PROMPT = r'''You are a strict dataset classifier. Your job is to decide if a given text sample contains WORLD KNOWLEDGE or NOT.
+SYSTEM_PROMPT = r'''Classify if the text contains WORLD KNOWLEDGE (real-world facts: history, geography, science, real people/organizations/brands).
 
-WORLD KNOWLEDGE means:
-- Historical facts (names, dates, events)
-- Geographical facts (cities, countries, capitals)
-- Scientific facts about the real world (physics, biology, chemistry facts)
-- Real-world persons, organizations, brands
-- Cultural facts (real holidays, real traditions)
-- Programming algorithms (sorting, searching)
-  
-NOT WORLD KNOWLEDGE means:
-- Pure mathematics (numbers, equations, calculations)
-- Formal logic (if-then puzzles, abstract reasoning)
-- Fictional scenarios ("Alice has 3 apples...")
-- Poetry, lyrics, creative writing without real-world references
-- Basic conversational phrases ("Hello", "How are you?")
+Answer with ONLY one word: "unsafe" (contains world knowledge) or "safe" (pure math, logic, fiction, or conversation).
 
-RULES:
-- Be CONSERVATIVE: If unsure, classify as "contains_world_knowledge".
-- A math word problem with a fictional character is SAFE.
-- A math problem mentioning "Paris" or "Einstein" is UNSAFE.
-- Logic puzzles with abstract names (Alice, Bob, Charlie) are SAFE.
-
-Output ONLY a JSON object:
-{
-  "classification": "safe" or "unsafe",
-  "reason": "One sentence explaining why",
-  "confidence": 1-10
-}
+Rules:
+- Math with fictional characters (Alice has 3 apples) = safe
+- Math mentioning real places/people (Paris, Einstein) = unsafe
+- Logic puzzles with abstract names (Alice, Bob) = safe
+- If unsure = unsafe
 '''
 
 CATEGORY_FILENAMES = {
@@ -79,6 +59,36 @@ CATEGORY_FILENAMES = {
     ("safe", "5_plus"): "no_world_knowledge_confidence_5_plus.jsonl",
     ("safe", "4_minus"): "no_world_knowledge_confidence_4_minus.jsonl",
 }
+
+
+def build_forced_choice_processor(tokenizer):
+    """Build a LogitsProcessor that forces the model to output only 'safe' or 'unsafe'.
+
+    The processor masks every token except the first token of 'safe' or 'unsafe'
+    (with and without leading space, capitalised variants).  Combined with
+    ``max_new_tokens=1`` this gives a true single-token, no-reasoning answer.
+    """
+    import torch
+    from transformers import LogitsProcessor, LogitsProcessorList
+
+    token_to_label = {}
+    for label in ("safe", "unsafe"):
+        for prefix in ("", " "):
+            for word_form in (label, label.capitalize()):
+                token_ids = tokenizer.encode(prefix + word_form, add_special_tokens=False)
+                if token_ids:
+                    token_to_label[token_ids[0]] = label
+
+    allowed_token_ids = list(token_to_label.keys())
+
+    class _ForcedChoiceProcessor(LogitsProcessor):
+        def __call__(self, input_ids, scores):
+            mask = torch.full_like(scores, float("-inf"))
+            for token_id in allowed_token_ids:
+                mask[:, token_id] = 0
+            return scores + mask
+
+    return LogitsProcessorList([_ForcedChoiceProcessor()]), token_to_label
 
 
 def example_key(record):
@@ -149,43 +159,31 @@ def install_dependencies():
     )
 
 
-def normalize_prediction(decoded):
-    """Extract the one JSON object and default conservatively on invalid output."""
-    match = re.search(r"\{.*?\}", decoded, flags=re.DOTALL)
-    if not match:
+def normalize_prediction(decoded, token_id=None, token_to_label=None):
+    """Map a single-token answer to a classification, defaulting conservatively."""
+    if token_to_label and token_id is not None and token_id in token_to_label:
         return {
-            "classification": "unsafe",
-            "reason": "The model did not return valid JSON, so the conservative unsafe rule was applied.",
+            "classification": token_to_label[token_id],
+            "reason": "Forced single-token classification.",
             "confidence": 5,
-            "parse_status": "invalid_json",
-            "raw_model_output": decoded,
-        }
-    try:
-        value = json.loads(match.group(0))
-        classification = str(value.get("classification", "")).strip().lower()
-        if classification not in {"safe", "unsafe"}:
-            raise ValueError("classification must be safe or unsafe")
-        confidence = int(value.get("confidence"))
-        if not 1 <= confidence <= 10:
-            raise ValueError("confidence must be in 1..10")
-        reason = str(value.get("reason", "")).strip()
-        if not reason:
-            raise ValueError("reason is empty")
-        return {
-            "classification": classification,
-            "reason": reason,
-            "confidence": confidence,
             "parse_status": "ok",
             "raw_model_output": decoded,
         }
-    except (ValueError, TypeError, json.JSONDecodeError) as exc:
-        return {
-            "classification": "unsafe",
-            "reason": "The model response was invalid, so the conservative unsafe rule was applied.",
-            "confidence": 5,
-            "parse_status": f"invalid_fields: {exc}",
-            "raw_model_output": decoded,
-        }
+    # Fallback: parse the decoded text
+    decoded_lower = decoded.strip().lower()
+    if "unsafe" in decoded_lower:
+        classification = "unsafe"
+    elif "safe" in decoded_lower:
+        classification = "safe"
+    else:
+        classification = "unsafe"
+    return {
+        "classification": classification,
+        "reason": "Forced single-token classification (fallback parsing).",
+        "confidence": 5,
+        "parse_status": "ok" if decoded_lower else "empty_output",
+        "raw_model_output": decoded,
+    }
 
 
 def category_for(prediction):
@@ -238,8 +236,15 @@ def load_model(gpu_id):
 
 
 def classify_one(model, tokenizer, gpu_id, sample_text):
-    """Exactly one fresh generate call is made for this dataset example."""
+    """Exactly one fresh generate call is made for this dataset example.
+
+    The model is forced to output a single token ('safe' or 'unsafe') via a
+    LogitsProcessor that masks all other tokens.  This eliminates reasoning
+    / chain-of-thought output and makes each call near-instant.
+    """
     import torch
+
+    processor, token_to_label = build_forced_choice_processor(tokenizer)
 
     # Mistral-7B-Instruct-v0.1 only accepts alternating user/assistant turns;
     # unlike newer chat models, its bundled template rejects a separate system
@@ -250,7 +255,7 @@ def classify_one(model, tokenizer, gpu_id, sample_text):
             "role": "user",
             "content": (
                 SYSTEM_PROMPT
-                + "\n\nClassify this complete dataset sample:\n"
+                + "\n\nClassify this dataset sample (answer ONLY 'safe' or 'unsafe'):\n"
                 + sample_text
             ),
         },
@@ -259,7 +264,7 @@ def classify_one(model, tokenizer, gpu_id, sample_text):
     # A malformed/very long row must never be allowed to create an unbounded
     # attention matrix. Retry only the current row with a shorter prompt after
     # an OOM; rows are never batched together.
-    attempts = ((MAX_INPUT_TOKENS, MAX_NEW_TOKENS), (1024, 32), (512, 16))
+    attempts = ((MAX_INPUT_TOKENS, MAX_NEW_TOKENS), (1024, MAX_NEW_TOKENS), (512, MAX_NEW_TOKENS))
     for input_limit, output_limit in attempts:
         encoded = None
         generated = None
@@ -278,10 +283,12 @@ def classify_one(model, tokenizer, gpu_id, sample_text):
                     do_sample=False,
                     use_cache=True,
                     pad_token_id=tokenizer.eos_token_id,
+                    logits_processor=processor,
                 )
             answer_tokens = generated[0, encoded["input_ids"].shape[1] :]
             decoded = tokenizer.decode(answer_tokens, skip_special_tokens=True).strip()
-            prediction = normalize_prediction(decoded)
+            first_token_id = answer_tokens[0].item() if len(answer_tokens) > 0 else None
+            prediction = normalize_prediction(decoded, first_token_id, token_to_label)
             if input_limit != MAX_INPUT_TOKENS:
                 prediction["parse_status"] = f"{prediction['parse_status']}; oom_retry_input_tokens={input_limit}"
             return prediction
@@ -472,6 +479,8 @@ def main():
                 "datasets": dataset_ids,
                 "num_gpus": NUM_GPUS,
                 "one_model_call_per_example": True,
+                "forced_single_token": True,
+                "max_new_tokens": MAX_NEW_TOKENS,
                 "started_at_unix": time.time(),
             },
             indent=2,
