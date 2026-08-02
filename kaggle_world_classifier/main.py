@@ -448,7 +448,9 @@ def parse_args():
         default=OUTPUT_DIR,
         help="Checkpoint/output directory (default: Kaggle working directory).",
     )
-    return parser.parse_args()
+    # parse_known_args ignores unrecognised flags that Jupyter/Kaggle/Colab
+    # kernels inject into sys.argv (e.g. -f /tmp/...json --HistoryManager...).
+    return parser.parse_known_args()[0]
 
 
 def main():
