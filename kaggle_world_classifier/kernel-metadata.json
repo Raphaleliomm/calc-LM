@@ -1,0 +1,18 @@
+{
+  "id": "raphbre/world-knowledge-dataset-classifier",
+  "title": "World Knowledge Dataset Classifier",
+  "code_file": "main.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": [
+    "mistral-ai/mistral/PyTorch/7b-instruct-v0.1-hf/1"
+  ]
+}
