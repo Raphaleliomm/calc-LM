@@ -1,0 +1,43 @@
+# ===== Large data / Kaggle output =====
+# Downloaded Kaggle kernel output (contains large JSONL files + HF cache)
+kaggle_output/
+# Checkpoint files uploaded as Kaggle dataset (large JSONL files)
+kaggle_checkpoint/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ===== Model caches =====
+# Local model cache used by vergleichskis/llammlein_chat.py
+model_cache/
+# Hugging Face cache
+hf-cache/
+.cache/
+
+# ===== Environment / secrets =====
+.env
+.env.*
+*.pem
+*.key
+# Kaggle credentials (usually in ~/.kaggle but just in case)
+.kaggle/
+
+# ===== IDE / OS =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log

@@ -34,7 +34,6 @@ MAX_NEW_TOKENS = 1
 MAX_INPUT_TOKENS = 2048
 
 DATASETS = [
-    "ianncity/GLM-5.2-Logic-Puzzles",
     "ianncity/GLM-5.2-Conversation",
     "sanjay-29-29/math-dataset-instruction",
     "MU-NLPC/Calc-gsm8k",
@@ -467,6 +466,19 @@ def main():
             "Select a Kaggle GPU, then rerun."
         )
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Restore checkpoint from the Kaggle input dataset so the script resumes
+    # where the previous run left off instead of starting from scratch.
+    checkpoint_input = Path("/kaggle/input/world-knowledge-checkpoint")
+    if checkpoint_input.exists():
+        import shutil
+        for src_file in checkpoint_input.glob("*.jsonl"):
+            dest_file = OUTPUT_DIR / src_file.name
+            if not dest_file.exists():
+                print(f"RESTORE_CHECKPOINT {src_file.name}", flush=True)
+                shutil.copy2(src_file, dest_file)
+        print("Checkpoint restored from input dataset.", flush=True)
+
     started_at = time.time()
     completed_keys = load_completed_keys()
     print(
