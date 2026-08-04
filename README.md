@@ -7,13 +7,13 @@ Zwei winzige Language Models, von Grund auf trainiert auf einem No-World-Knowled
 |                              | `Calc_LMs/firsttry`                       | `Calc_LMs/secondtry`                              |
 |------------------------------|-------------------------------------------|---------------------------------------------------|
 | **Architektur**              | Standard Transformer                       | Recurrent Transformer + Attention Residuals       |
-| **Schichten**                | 8 einzigartige                            | 8 einzigartige, davon 2 geloopt ×4 → effektive Tiefe 14 |
+| **Schichten**                | 8 einzigartige                            | 8 einzigartige, davon 2 geloopt ×2 → effektive Tiefe 10 |
 | **Residual**                 | fixer +1-Skip                             | Attention über Tiefe (AttnRes): gelernte Pseudo-Query attendiert über alle vorherigen Layer-Outputs |
 | **Parameter**                | ~5.26M                                    | ~6.84M                                            |
-| **Val-Loss (best.pt)**       | **3.8686**                                | **3.9543** (nach 8000 Steps)                      |
-| **Perplexity**               | **47.88**                                 | **52.16**                                         |
-| **Token-Accuracy**           | **25.77%**                                | **25.26%**                                        |
-| **Trainingsschritte**        | 4000                                      | 4000 + 4000 Resume = 8000                        |
+| **Val-Loss (best.pt)**       | **3.8686**                                | **4.2505**                                        |
+| **Perplexity**               | **47.88**                                 | **70.14**                                         |
+| **Token-Accuracy**           | **25.77%**                                | **21.61%**                                        |
+| **Trainingsschritte**        | 4000                                      | 4000                                            |
 
 ## Nutzung
 
@@ -22,8 +22,9 @@ Zwei winzige Language Models, von Grund auf trainiert auf einem No-World-Knowled
 python Calc_LMs/firsttry/train_tokenizer.py
 python Calc_LMs/secondtry/train_tokenizer.py
 
-# Training (secondtry: Resume vom Checkpoint)
-$env:TRAIN_STEPS="8000"; $env:RESUME_CKPT="final.pt"; python Calc_LMs/secondtry/train.py
+# Training (4000 Steps; secondtry unterstützt Resume via $env:RESUME_CKPT)
+python Calc_LMs/firsttry/train.py
+python Calc_LMs/secondtry/train.py
 
 # Inferenz
 python Calc_LMs/firsttry/inference.py "Dein Prompt" --ckpt best.pt

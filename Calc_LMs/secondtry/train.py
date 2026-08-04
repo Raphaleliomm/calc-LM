@@ -167,7 +167,7 @@ def main():
         hidden_size=256,
         num_layers=8,
         num_recurrent_layers=2,
-        recurrent_loops=4,
+        recurrent_loops=2,
         num_heads=4,
         ffn_size=512,
         max_seq_len=MAX_SEQ_LEN,

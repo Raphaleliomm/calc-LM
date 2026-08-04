@@ -1,9 +1,9 @@
 """Recurrent Transformer with Attention Residuals (AttnRes).
-Architecture: 256 hidden, 8 unique layers (2 recurrent in the middle, looped 4x),
+Architecture: 256 hidden, 8 unique layers (2 recurrent in the middle, looped 2x),
 4 heads, 512 FFN, 64 context, 2048 vocab, 1.58-bit ternary weights.
 
-- Depth-Recurrent: the 2 middle layers reuse the same weights and loop 4 times,
-  giving effective depth 3 + 2*4 + 3 = 14 without extra parameters.
+- Depth-Recurrent: the 2 middle layers reuse the same weights and loop 2 times,
+  giving effective depth 3 + 2*2 + 3 = 10 without extra parameters.
 - Attention Residuals: each layer uses a learned pseudo-query to attend over all
   preceding layer outputs (attention over depth) instead of a fixed +1 residual.
 """
@@ -63,7 +63,7 @@ class ModelConfig:
     hidden_size: int = 256
     num_layers: int = 8          # total unique layers
     num_recurrent_layers: int = 2  # middle layers that are looped
-    recurrent_loops: int = 4     # how many times the recurrent layers loop
+    recurrent_loops: int = 2     # how many times the recurrent layers loop
     num_heads: int = 4
     ffn_size: int = 512
     max_seq_len: int = 64
