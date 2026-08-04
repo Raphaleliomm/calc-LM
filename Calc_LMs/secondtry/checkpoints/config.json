@@ -1,0 +1,15 @@
+{
+  "vocab_size": 2048,
+  "hidden_size": 256,
+  "num_layers": 8,
+  "num_recurrent_layers": 2,
+  "recurrent_loops": 4,
+  "num_heads": 4,
+  "ffn_size": 512,
+  "max_seq_len": 64,
+  "dropout": 0.0,
+  "pad_id": 0,
+  "bos_id": 1,
+  "eos_id": 2,
+  "unk_id": 3
+}
