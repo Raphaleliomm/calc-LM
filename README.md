@@ -1,4 +1,4 @@
-# calc-LM
+# calc-LMs
 
 Zwei winzige Language Models, von Grund auf trainiert auf einem No-World-Knowledge-Datensatz (16.021 Chat-Beispiele, Logik-Puzzles/Reasoning). Beide nutzen **1.58-bit ternäre Gewichte** (BitNet b1.58, STE-Quantisierung), 64 Token Context und ein 2048-Token BPE-Vokabular (trainiert nur auf den Daten). Nur Assistant-Tokens werden als LM-Ziel maskiert (mit korrektem Target-Shift).
 
