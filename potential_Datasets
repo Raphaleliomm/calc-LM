@@ -8,7 +8,7 @@ Potential Datasets:
   Not good: uses weird token combinations for specific symbols, may be to advanced for the mini model, has thinking (maybe eats too much tokens for my mini model)
   Good: contains direct logical thinking, comes from a really good model
 
-GLM 5.2 Q/A science: https://huggingface.co/datasets/ianncity/GLM-5.2-Science
+(will not use) GLM 5.2 Q/A science: https://huggingface.co/datasets/ianncity/GLM-5.2-Science
   Not good: has science, uses weird token combinations for specific symbols, may be to advanced for the mini model, has thinking (maybe eats too much tokens for my mini model)
   Good: contains direct logical thinking, comes from a really good model
 
