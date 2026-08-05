@@ -1,10 +1,10 @@
 Potential Datasets:
 
-GLM 5.2 Q/A conversation: https://huggingface.co/datasets/ianncity/GLM-5.2-Conversation
+(In use) GLM 5.2 Q/A conversation: https://huggingface.co/datasets/ianncity/GLM-5.2-Conversation
   Not good: uses weird token combinations for specific symbols, contains code, may be to advanced for the mini model, has thinking (maybe eats too much tokens for my mini model), has too much world Information
   Good: contains direct logical thinking, comes from a really good model
 
-GLM 5.2 Q/A Logic puzzles: https://huggingface.co/datasets/ianncity/GLM-5.2-Logic-Puzzles
+(in use) GLM 5.2 Q/A Logic puzzles: https://huggingface.co/datasets/ianncity/GLM-5.2-Logic-Puzzles
   Not good: uses weird token combinations for specific symbols, may be to advanced for the mini model, has thinking (maybe eats too much tokens for my mini model)
   Good: contains direct logical thinking, comes from a really good model
 
